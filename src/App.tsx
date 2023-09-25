@@ -15,6 +15,8 @@ function App() {
   let [showChatbot, setShowChatbot] = useState(true);
   let [speak, setSpeak] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [ticket, setTicket] = useState(false);
+  const mailref = useRef<any>(null);
 
   const {
     transcript,
@@ -138,6 +140,20 @@ function App() {
     }
   }
 
+  const raiseIssue = async () => {
+    let email = mailref.current?.value;
+    if (!email) return;
+    if (messages.length <= 1) return;
+    let botres = await axios.post('https://mipchatbot.onrender.com/send-chat-mip', { "email": email, chat: messages })
+      .catch(err => {
+        setLoading(false);
+      })
+    if (botres?.status == 200) {
+      setTicket(false);
+      mailref.current.value = "";
+    }
+  }
+
   useEffect(() => {
     retrieveChat();
   }, [])
@@ -188,6 +204,9 @@ function App() {
               </span>
             </div>
             <span className='chatbot-ui-options'>
+              <button className='issue' onClick={() => { setTicket(!ticket) }}>{!ticket ? 'Raise Issue' : 'Cancel'}</button>
+            </span>
+            <span className='chatbot-ui-options'>
               <ul className='chatbot-ui-menu'>
                 <li onClick={() => { setShowChatbot(false) }} className='chat-dropdown'><a className='toogle-links' href='javascript:void(0)'> <i className="pi pi-times"></i> </a>
                 </li>
@@ -196,51 +215,67 @@ function App() {
             </span>
           </div>
           {/* chatbot contents */}
-          <div ref={containerRef} className='chatbot-ui-contents'>
+          {
+            !ticket &&
 
-            {
-              messages.map((m, idx) => (
-                m.bot == 1 ?
-                  <div className='chat-left'>
-                    <span className='user-chat tw-relative'>
-                      {/* <img className='bot-profile' src="https://mindler-products-images.imgix.net/mip-msh-23/bot1.jpeg" alt="" /> */}
-                      <div className='sp-small'></div>
-                    </span>
-                    <span className='chat-r-1 tw-relative'>
-                      <span className='c-text-1'> {m.message} <i onClick={() => { onSpeakerClick(m.message) }} className='pi pi-volume-up tw-cursor-pointer tw-absolute tw-top-0 tw-right-1'></i> </span>
-                      {/* <span className='thumb-response active'> </span> */}
-                    </span>
-                  </div> :
-                  <div className='chat-right'>
-                    <span className='chat-r-1'>
-                      {/* <span className='thumb-response'> </span> */}
-                      <span className='c-text-1'> {m.message} </span>
-                    </span>
-                    <span className='user-chat'> <i className="pi pi-user"></i> </span>
-                  </div>
-              ))
-            }
+            <div ref={containerRef} className='chatbot-ui-contents'>
 
-            {(fpq && fpq.length) &&
-              <div onClick={()=>{onFollowUp()}} className='chat-slection-options'>
-                <ul className='chat-slection-option-lists'>
-                  <li> <a className='button-links' href='javascript:void(0)'> Do you want to ask : {fpq} </a> </li>
-                </ul>
+
+              {
+                messages.map((m, idx) => (
+                  m.bot == 1 ?
+                    <div className='chat-left'>
+                      <span className='user-chat tw-relative'>
+                        {/* <img className='bot-profile' src="https://mindler-products-images.imgix.net/mip-msh-23/bot1.jpeg" alt="" /> */}
+                        <div className='sp-small'></div>
+                      </span>
+                      <span className='chat-r-1 tw-relative'>
+                        <span className='c-text-1'> {m.message} <i onClick={() => { onSpeakerClick(m.message) }} className='pi pi-volume-up tw-cursor-pointer tw-absolute tw-top-0 tw-right-1'></i> </span>
+                        {/* <span className='thumb-response active'> </span> */}
+                      </span>
+                    </div> :
+                    <div className='chat-right'>
+                      <span className='chat-r-1'>
+                        {/* <span className='thumb-response'> </span> */}
+                        <span className='c-text-1'> {m.message} </span>
+                      </span>
+                      <span className='user-chat'> <i className="pi pi-user"></i> </span>
+                    </div>
+                ))
+              }
+
+              {(fpq && fpq.length) &&
+                <div onClick={() => { onFollowUp() }} className='chat-slection-options'>
+                  <ul className='chat-slection-option-lists'>
+                    <li> <a className='button-links' href='javascript:void(0)'> Do you want to ask : {fpq} </a> </li>
+                  </ul>
+                </div>
+              }
+
+              {(messages && messages.length == 1) &&
+                <div className='chat-slection-options'>
+                  <p className='tw-text-center'>Frequently Asked: </p>
+                  <ul className='chat-slection-option-lists'>
+                    <li onClick={() => { onFollowUp("What is MIP ?") }}> <a className='button-links' href='javascript:void(0)'> What is MIP ?  </a> </li>
+                    <li onClick={() => { onFollowUp("What are the stages in MSH ?") }}> <a className='button-links' href='javascript:void(0)'> What are the stages in MSH ?  </a> </li>
+                    <li onClick={() => { onFollowUp("What are the benefits of mindler internship ?") }}> <a className='button-links' href='javascript:void(0)'> What are the benefits of mindler internship ?  </a> </li>
+                  </ul>
+                </div>
+              }
+
+            </div>
+          }
+
+          {ticket &&
+
+            <div ref={containerRef} className='chatbot-ui-contents'>
+              <p className='tw-text-center'>Raise a Ticket with your conversation:</p>
+              <div className='tw-flex tw-flex-col tw-items-center tw-gap-y-1'>
+                <input ref={mailref} type="text" placeholder='Type your email..' className='emailip' />
+                <button type='button' onClick={raiseIssue} className='raise'>Raise</button>
               </div>
-            }
-
-            {(messages && messages.length==1) &&
-              <div className='chat-slection-options'>
-                <p className='tw-text-center'>Frequently Asked: </p>
-                <ul className='chat-slection-option-lists'>
-                  <li onClick={()=>{onFollowUp("What is MIP ?")}}> <a className='button-links' href='javascript:void(0)'> What is MIP ?  </a> </li>
-                  <li onClick={()=>{onFollowUp("What are the stages in MSH ?")}}> <a className='button-links' href='javascript:void(0)'> What are the stages in MSH ?  </a> </li>
-                  <li onClick={()=>{onFollowUp("What are the benefits of mindler internship ?")}}> <a className='button-links' href='javascript:void(0)'> What are the benefits of mindler internship ?  </a> </li>
-                </ul>
-              </div>
-            }
-
-          </div>
+            </div>
+          }
 
           {/* chatbot footer */}
           <div className='chatbot-ui-footer'>
