@@ -28,10 +28,19 @@ function App() {
     if (!query) return;
 
     inputRef.current.value = '';
+    resetTranscript();
+
+    if ((query?.trim()?.toLowerCase() == 'yes' || query?.trim()?.toLowerCase() == 'yeah') && fpq) {
+      query = fpq;
+    }
+
     pushMessage(query);
 
+    setFpq("");
+
     setLoading(true);
-    let botres = await axios.post('https://mipchatbot.onrender.com/ask-mip-msh', { "question": query })
+
+    let botres = await axios.post('https://mipchatbot.onrender.com/ask-mip-msh-liamsi', { "question": query })
       .catch(err => {
         setLoading(false);
       })
@@ -83,8 +92,8 @@ function App() {
     }
   }
 
-  const onFollowUp = () => {
-    inputRef.current.value = fpq;
+  const onFollowUp = (ques = '') => {
+    inputRef.current.value = ques || fpq;
     onAsk();
   }
 
@@ -213,9 +222,20 @@ function App() {
             }
 
             {(fpq && fpq.length) &&
-              <div onClick={onFollowUp} className='chat-slection-options'>
+              <div onClick={()=>{onFollowUp()}} className='chat-slection-options'>
                 <ul className='chat-slection-option-lists'>
                   <li> <a className='button-links' href='javascript:void(0)'> Do you want to ask : {fpq} </a> </li>
+                </ul>
+              </div>
+            }
+
+            {(messages && messages.length==1) &&
+              <div className='chat-slection-options'>
+                <p className='tw-text-center'>Frequently Asked: </p>
+                <ul className='chat-slection-option-lists'>
+                  <li onClick={()=>{onFollowUp("What is MIP ?")}}> <a className='button-links' href='javascript:void(0)'> What is MIP ?  </a> </li>
+                  <li onClick={()=>{onFollowUp("What are the stages in MSH ?")}}> <a className='button-links' href='javascript:void(0)'> What are the stages in MSH ?  </a> </li>
+                  <li onClick={()=>{onFollowUp("What are the benefits of mindler internship ?")}}> <a className='button-links' href='javascript:void(0)'> What are the benefits of mindler internship ?  </a> </li>
                 </ul>
               </div>
             }
